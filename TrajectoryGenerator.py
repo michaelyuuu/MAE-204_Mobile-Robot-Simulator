@@ -5,7 +5,7 @@ block_init = np.array([1, 0 ,0])
 block_end = np.array([0, -1, -np.pi/2])
 standoff = 0.2 # distance above the block[m]
 Tf = 5 # total time of the trajectory [s]
-N = 100 # number of trajectory reference configurations
+N = 200 # number of trajectory reference configurations
 method = 5 # interpolation method 'cubic' 3  or 'quintic' 5
 z = 0.025 # height of the block
 pose_init = np.array([[1, 0, 0, 0],
@@ -79,7 +79,8 @@ def TrajectoryGenerator(T_init, Cube_init, Cube_end , T_ce_grasp, T_ce_standoff,
     #save the trajectory to a csv file
     np.savetxt("trajectory.csv", Traj, delimiter=",")
     return Traj
-TrajectoryGenerator(pose_init, cube_init_T, cube_end_T, T_ce_grasp, T_ce_standoff, k)
+if __name__ == "__main__":
+    TrajectoryGenerator(pose_init, cube_init_T, cube_end_T, T_ce_grasp, T_ce_standoff, k)
 
 
 # Vedio link
