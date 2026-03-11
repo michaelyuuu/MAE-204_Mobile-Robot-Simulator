@@ -66,7 +66,6 @@ T0e = np.array([[1, 0, 0, 0.033],
 
 def FeedbackControl(T_se, T_sd, T_sd_next, Kp, Ki, dt, J_arm, J_base, Xerr_sum):
     # Compute the feedforward reference twist
-    Xerr_sum = np.zeros(6)
     Vd = mr.se3ToVec((1/dt) * mr.MatrixLog6(np.dot(mr.TransInv(T_sd), T_sd_next)))
     # print("Vd: ", Vd)
     # Compute the error twist 

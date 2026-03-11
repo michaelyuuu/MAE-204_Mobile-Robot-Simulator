@@ -36,7 +36,7 @@ def NextState(current_state, joint_velocity, dt, joint_limits):
     # Update chassis state
     if abs(yaw_rate) < 1e-6:
         delta_chassis_state = np.array([
-            0,
+            yaw_rate,
             chassis_twist[1],
             chassis_twist[2]
         ])

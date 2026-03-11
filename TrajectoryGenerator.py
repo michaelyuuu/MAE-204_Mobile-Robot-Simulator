@@ -4,8 +4,9 @@ import time
 block_init = np.array([1, 0 ,0])
 block_end = np.array([0, -1, -np.pi/2])
 standoff = 0.2 # distance above the block[m]
-Tf = 5 # total time of the trajectory [s]
-N = 200 # number of trajectory reference configurations
+Tf = 15 # total time of the trajectory [s]
+k=1 # number of trajectory reference configurations per 0.01 second
+N = Tf*k/0.01 # number of trajectory reference configurations
 method = 5 # interpolation method 'cubic' 3  or 'quintic' 5
 z = 0.025 # height of the block
 pose_init = np.array([[1, 0, 0, 0],
@@ -59,7 +60,9 @@ def TrajectoryGenerator(T_init, Cube_init, Cube_end , T_ce_grasp, T_ce_standoff,
     grasp_state = np.append(grasp_state, 1) #grasping state, 1 for grasping, 0 for not grasping
     M.extend(mr.ScrewTrajectory(T_release, T_release, Tf, N, method))
     grasp_state = np.append(grasp_state, 0) #grasping state, 1 for grasping, 0 for not grasping
-    M.extend(mr.ScrewTrajectory(T_release,T_init, Tf, N, method))
+    M.extend(mr.ScrewTrajectory(T_release,T_standoff_end, Tf, N, method))
+    grasp_state = np.append(grasp_state, 0) #grasping state, 1 for grasping, 0 for not grasping
+    M.extend(mr.ScrewTrajectory(T_standoff_end,T_init, Tf, N, method))
     grasp_state = np.append(grasp_state, 0) #grasping state, 1 for grasping, 0 for not grasping
     print (grasp_state)
     print (np.shape(M))
