@@ -41,42 +41,33 @@ k = 1 #numbe of trajectory reference configurations per 0.01 second
 
 grasp_state = np.zeros(10) #grasping state, 1 for grasping, 0 for not grasping
 def TrajectoryGenerator(T_init, Cube_init, Cube_end , T_ce_grasp, T_ce_standoff, k):
+    dt = 0.01/k
     Traj = []
     T_grasp = Cube_init @ T_ce_grasp
     T_standoff_init = Cube_init @ T_ce_standoff
     T_standoff_end = Cube_end @ T_ce_standoff
     T_release = Cube_end @ T_ce_grasp
-    M = mr.ScrewTrajectory(T_init, T_standoff_init, Tf, N, method)
-    grasp_state = np.array([0]) #grasping state, 1 for grasping, 0 for not grasping
-    M.extend(mr.ScrewTrajectory(T_standoff_init, T_grasp, Tf, N, method))
-    grasp_state = np.append(grasp_state, 0) #grasping state, 1 for grasping, 0 for not grasping
-    M.extend(mr.ScrewTrajectory(T_grasp, T_grasp, Tf, N, method))
-    grasp_state = np.append(grasp_state, 1) #grasping state, 1 for grasping, 0 for not grasping
-    M.extend(mr.ScrewTrajectory(T_grasp, T_standoff_init, Tf, N, method))
-    grasp_state = np.append(grasp_state, 1) #grasping state, 1 for grasping, 0 for not grasping
-    M.extend(mr.ScrewTrajectory(T_standoff_init, T_standoff_end, Tf, N, method))
-    grasp_state = np.append(grasp_state, 1) #grasping state, 1 for grasping, 0 for not grasping
-    M.extend(mr.ScrewTrajectory(T_standoff_end, T_release, Tf, N, method))
-    grasp_state = np.append(grasp_state, 1) #grasping state, 1 for grasping, 0 for not grasping
-    M.extend(mr.ScrewTrajectory(T_release, T_release, Tf, N, method))
-    grasp_state = np.append(grasp_state, 0) #grasping state, 1 for grasping, 0 for not grasping
-    M.extend(mr.ScrewTrajectory(T_release,T_standoff_end, Tf, N, method))
-    grasp_state = np.append(grasp_state, 0) #grasping state, 1 for grasping, 0 for not grasping
-    M.extend(mr.ScrewTrajectory(T_standoff_end,T_init, Tf, N, method))
-    grasp_state = np.append(grasp_state, 0) #grasping state, 1 for grasping, 0 for not grasping
+    def append_segment(start_T, end_T, Tf, grasp_val):
+        N = max(int(Tf / dt), 1) #calculate how much steps for the segment
+        segment = mr.ScrewTrajectory(start_T, end_T, Tf, N, 5) 
+        for T in segment:
+            Rot = np.array(T[:3, :3]).flatten()
+            pos = np.array(T[:3, 3]).flatten()
+            Traj.append(np.concatenate((Rot, pos, [grasp_val])))
+    append_segment(T_init, T_standoff_init, 6.0, 0)           # 
+    append_segment(T_standoff_init, T_grasp, 2.0, 0)          # 
+    append_segment(T_grasp, T_grasp, 0.63, 1)                      # 
+    append_segment(T_grasp, T_standoff_init, 2.0, 1)          # 
+    append_segment(T_standoff_init, T_standoff_end, 5.0, 1)   #
+    append_segment(T_standoff_end, T_release, 2.0, 1)         # 
+    append_segment(T_release, T_release, 0.63, 0)                  # 
+    append_segment(T_release, T_standoff_end, 2.0, 0)         # 
+    # M.extend(mr.ScrewTrajectory(T_standoff_end,T_init, Tf, N, method))
+    # grasp_state = np.append(grasp_state, 0) #grasping state, 1 for grasping, 0 for not grasping
     print (grasp_state)
-    print (np.shape(M))
     print (T_release)
     # grasp = 0 #grasping state, 1 for grasping, 0 for not grasping
     #flatten the trajectory list and convert to numpy array
-    cnt = 0
-    for i in range(np.shape(M)[0]):
-        if i%(N)==0 or i == 0:
-            grasp = grasp_state[cnt]
-            cnt += 1  
-        Rot = np.array(M[i][:3,:3]).flatten()
-        pos = np.array(M[i][:3,3]).flatten()
-        Traj.append(np.concatenate((Rot, pos, [grasp])))
     print("Trajectory from initial pose to standoff pose generated.")
     print(Traj[-1])
     #save the trajectory to a csv file

@@ -1,78 +1,58 @@
-import modern_robotics as mr
 import numpy as np
-def NextState(current_state, joint_velocity, dt, joint_limits):
-    # current_state: [x, y, theta]
-    # control_input: [v, w]
-    # dt: time step
-    r = 0.0475 # wheel radius
-    L = 0.47/2 # distance between the center of the robot and the wheel
-    w = 0.15 # distance between the left and right wheels
-    z = 0.0963 # height of the robot chassis frame b center
-    # chassis base to arm base transformation
-    Tb0 = np.array([[1, 0, 0, 0.1662],
-                    [0, 1, 0, 0],
-                    [0, 0, 1, 0.0026],
-                    [0, 0, 0, 1]])
-    M0e = np.array([[1, 0, 0, 0.033],
-                    [0, 1, 0, 0],
-                    [0, 0, 1, 0.6546],
-                    [0, 0, 0, 1]])
+
+def NextState(current_state, joint_velocity, dt, max_vel):
+    """
+    计算机器人在 dt 时间后的状态。
+    current_state: 12-vector (3 个底盘变量, 5 个机械臂关节, 4 个轮子角度)
+    joint_velocity: 9-vector (5 个机械臂关节速度, 4 个轮子速度)
+    """
+    # 限制最大速度以防超限
+    joint_velocity = np.clip(joint_velocity, -max_vel, max_vel)
+    
+    arm_vel = joint_velocity[:5]
+    wheel_vel = joint_velocity[5:9]
+    
     chassis_state = current_state[:3]
     arm_state = current_state[3:8]
     wheel_state = current_state[8:12]
-    arm_velocity = joint_velocity[:5]
-    arm_velocity = np.clip(arm_velocity, -np.pi/2, np.pi/2)
-    wheel_velocity = joint_velocity[5:9]
-    chassis_twist = r/4 * np.array([
-        [-1/(L+w), 1/(L+w), 1/(L+w), -1/(L+w)],
-        [1, 1, 1, 1],
-        [-1, 1, -1, 1],  
-    ]) @ (wheel_velocity*dt)
-    yaw_rate = chassis_twist[0]
-    # Update arm state
-    arm_state_next = arm_state + arm_velocity * dt
-    # Update wheel state
-    wheel_state_next = wheel_state + wheel_velocity * dt
-    # Update chassis state
-    if abs(yaw_rate) < 1e-6:
-        delta_chassis_state = np.array([
-            yaw_rate,
-            chassis_twist[1],
-            chassis_twist[2]
-        ])
+    
+    # 简单的欧拉积分更新机械臂和轮子角度
+    arm_state_next = arm_state + arm_vel * dt
+    wheel_state_next = wheel_state + wheel_vel * dt
+    
+    # youBot 麦克纳姆轮的几何参数
+    r = 0.0475
+    l = 0.47 / 2
+    w = 0.15
+    
+    # 轮速到底盘速度的转换矩阵 F
+    F = (r / 4) * np.array([
+        [-1/(l+w),  1/(l+w),  1/(l+w), -1/(l+w)],
+        [ 1,        1,        1,        1      ],
+        [-1,        1,       -1,        1      ]
+    ])
+    
+    # 计算底盘的 Twist (Vb)
+    Vb = F @ (wheel_vel * dt)
+    wbz, vbx, vby = Vb[0], Vb[1], Vb[2]
+    
+    # 根据航迹推算 (Odometry) 更新底盘坐标
+    if np.abs(wbz) < 1e-6:
+        dq = np.array([0, vbx, vby])
     else:
-        delta_chassis_state = np.array([
-            yaw_rate,
-            (chassis_twist[1]*np.sin(yaw_rate) + chassis_twist[2]*(np.cos(yaw_rate)-1))/yaw_rate,
-            (chassis_twist[2]*np.sin(yaw_rate) + chassis_twist[1]*(1-np.cos(yaw_rate)))/yaw_rate
+        dq = np.array([
+            wbz,
+            (vbx * np.sin(wbz) + vby * (np.cos(wbz) - 1)) / wbz,
+            (vby * np.sin(wbz) + vbx * (1 - np.cos(wbz))) / wbz
         ])
-    theta = chassis_state[0]
-    delta_chassis_state_s = np.array([[1, 0, 0],
-                                     [0, np.cos(theta), -np.sin(theta)],
-                                     [0, np.sin(theta), np.cos(theta)]])
-    chassis_state_next = chassis_state + delta_chassis_state_s @ delta_chassis_state
-    # print ("chassis_state_next: ", chassis_state_next)
-    # print(np.shape(chassis_state_next))
-    # print ("arm_state_next: ", arm_state_next)
-    # print ("wheel_state_next: ", wheel_state_next)
-    return np.concatenate((chassis_state_next, arm_state_next, wheel_state_next))
-if __name__ == "__main__":
-    #Test NextState function
-    current_state = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-    joint_velocity = np.array([0.5, -1, 1, 0.5, 0.5, 30, 30, 10, 10])
-    dt = 0.01
-    gripper_state = 0 #gripper state, 1 for grasping, 0 for not grasping
-    joint_limits = np.array([[-np.pi, np.pi], [-np.pi, np.pi], [-np.pi, np.pi], [-np.pi, np.pi], [-np.pi, np.pi]])
-    state = []
-    for i in range(100):
         
-        next_state = NextState(current_state, joint_velocity, dt, joint_limits)
-        next_state = np.concatenate((next_state,[gripper_state]))
-        current_state = next_state[:12]
-        state.append(next_state)
-    # print(next_state)
-    np.savetxt("state.csv", state, delimiter=",")
-    print(np.shape(state))
-
-# vedio link
-# https://drive.google.com/file/d/1lbgDFJGrlnpH5PzflTsHDh8_fr7KP37T/view?usp=sharing
+    phi = chassis_state[0]
+    T_sb = np.array([
+        [1, 0, 0],
+        [0, np.cos(phi), -np.sin(phi)],
+        [0, np.sin(phi),  np.cos(phi)]
+    ])
+    
+    chassis_state_next = chassis_state + T_sb @ dq
+    
+    return np.concatenate((chassis_state_next, arm_state_next, wheel_state_next))
