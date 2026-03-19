@@ -36,7 +36,7 @@ def TrajectoryGenerator(T_init, Cube_init, Cube_end, T_ce_grasp, T_ce_standoff, 
             Traj.append(np.concatenate((Rot, pos, [grasp_val])))
 
     # Generate the 8 segments with individual appropriate time durations
-    append_segment(T_init, T_standoff_init, 4.0, 0)          # 1. Move to standoff above init (open)
+    append_segment(T_init, T_standoff_init, 5.0, 0)          # 1. Move to standoff above init (open)
     append_segment(T_standoff_init, T_grasp_init, 2.0, 0)    # 2. Move down to grasp (open)
     append_segment(T_grasp_init, T_grasp_init, 0.63, 1)      # 3. Close gripper (wait ~63 steps)
     append_segment(T_grasp_init, T_standoff_init, 2.0, 1)    # 4. Move up back to standoff (closed)
@@ -44,8 +44,6 @@ def TrajectoryGenerator(T_init, Cube_init, Cube_end, T_ce_grasp, T_ce_standoff, 
     append_segment(T_standoff_end, T_grasp_end, 2.0, 1)      # 6. Move down to target (closed)
     append_segment(T_grasp_end, T_grasp_end, 0.63, 0)        # 7. Open gripper (wait ~63 steps)
     append_segment(T_grasp_end, T_standoff_end, 2.0, 0)      # 8. Move up to target standoff (open)
-
-    print("Trajectory generated successfully. Total steps:", len(Traj))
     
     # Save standalone trajectory for testing purposes
     np.savetxt("trajectory.csv", Traj, delimiter=",")
