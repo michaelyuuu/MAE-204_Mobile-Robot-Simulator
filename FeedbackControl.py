@@ -36,13 +36,36 @@ def FeedbackControl(T_se, T_sd, T_sd_next, Kp, Ki, dt, J_arm, J_base, Xerr_sum):
     Je = np.hstack((J_base, J_arm))
     # Compute the joint and wheel speeds using pseudo-inverse 
     # rcond=1e-3 is used to handle singularities without dropping matrix rank manually
+    # Combine base and arm Jacobians
+    Je = np.hstack((J_base, J_arm))
+    
+    # Compute the joint and wheel speeds using pseudo-inverse 
     control = np.linalg.pinv(Je, rcond=1e-3) @ V
     
-    # Clip speeds to prevent unrealistic extreme values
-    wheel_speed = np.clip(control[:4], -50, 50)        
-    joint_speed = np.clip(control[4:], -np.pi, np.pi)
+    # --- NEW SCALING LOGIC ---
+    # Define the physical limits for all 9 actuators (4 wheels, 5 arm joints)
+    max_wheel_speed = 50.0
+    max_joint_speed = np.pi
+    
+    limits = np.array([
+        max_wheel_speed, max_wheel_speed, max_wheel_speed, max_wheel_speed, 
+        max_joint_speed, max_joint_speed, max_joint_speed, max_joint_speed, max_joint_speed
+    ])
+    
+    # Find how much each commanded speed exceeds its limit
+    ratios = np.abs(control) / limits
+    max_ratio = np.max(ratios)
+    
+    # If the most saturated actuator exceeds 1.0, scale the ENTIRE vector down
+    if max_ratio > 1.0:
+        control = control / max_ratio
+        
+        
+    wheel_speed = control[:4]
+    joint_speed = control[4:]
     
     return V, wheel_speed, joint_speed, Xerr_sum, Xerr
+
 if __name__ == "__main__":
     T_sd = np.array([
     [0, 0, 1, 0.5],
