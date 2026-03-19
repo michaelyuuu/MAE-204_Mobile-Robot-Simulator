@@ -5,6 +5,11 @@ import matplotlib.pyplot as plt
 import Nextstate as ns
 import FeedbackControl as fc
 import TrajectoryGenerator as tg
+# Main file to run the mobile manipulator simulation.
+# This file sets up the robot parameters, generates a trajectory for the end-effector to follow,
+# and runs a control loop to compute the necessary joint and wheel velocities to follow the trajectory.
+# The resulting states are saved to "overall_trajectory.csv" for analysis and playback in the simulator Scene 6.
+# The control loop also computes and stores the error and manipulability metrics for further analysis.
 
 # Simulation setup
 dt = 0.01
