@@ -18,6 +18,7 @@ import numpy as np
 # - joint_speed: commanded joint speeds (5x1)
 # - Xerr_sum: updated accumulated error for integral control (6x1)
 #Run this file to test the FeedbackControl function with a sample input and print the resulting control twist, wheel speeds, and joint speeds for analysis.
+# the result was clipped to prevent unrealistic extreme values, but the function should compute the control twist and corresponding speeds based on the provided inputs.
 def FeedbackControl(T_se, T_sd, T_sd_next, Kp, Ki, dt, J_arm, J_base, Xerr_sum):
     # Compute the feedforward reference twist Vd
     Vd = mr.se3ToVec((1/dt) * mr.MatrixLog6(np.dot(mr.TransInv(T_sd), T_sd_next)))

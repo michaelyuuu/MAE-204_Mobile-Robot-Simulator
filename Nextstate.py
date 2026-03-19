@@ -9,6 +9,7 @@ import numpy as np
 # Outputs:
 # - next_state: next state of the robot after applying the control inputs for one time step (12x1 vector)
 # Run this file to test the NextState function with a sample input and save the resulting states to "state.csv" for analysis.
+# input csv file to simulator Scene 6
 def NextState(current_state, joint_velocity, dt, max_vel):
     r = 0.0475 # wheel radius
     L = 0.47/2 # distance between the center of the robot and the wheels (forward/backward)

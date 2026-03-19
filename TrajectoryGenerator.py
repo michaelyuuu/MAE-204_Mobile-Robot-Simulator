@@ -12,6 +12,7 @@ import numpy as np
 # Outputs:
 # - Traj: list of end-effector configurations (SE(3)) with gripper state for each time step
 # Run this file to test the TrajectoryGenerator function with sample inputs and save the resulting trajectory to "trajectory.csv" for analysis.
+# Input csv file to simulator Scene 8
 def TrajectoryGenerator(T_init, Cube_init, Cube_end, T_ce_grasp, T_ce_standoff, k):
     # Time step
     dt = 0.01 / k
