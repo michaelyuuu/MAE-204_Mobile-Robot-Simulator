@@ -1,5 +1,6 @@
 import modern_robotics as mr
 import numpy as np
+from pathlib import Path
 # TrajectoryGenerator.py
 # Generates a trajectory of end-effector configurations for the robot to follow.
 # Inputs:
@@ -46,7 +47,9 @@ def TrajectoryGenerator(T_init, Cube_init, Cube_end, T_ce_grasp, T_ce_standoff, 
     append_segment(T_grasp_end, T_standoff_end, 2.0, 0)      # 8. Move up to target standoff (open)
     
     # Save standalone trajectory for testing purposes
-    np.savetxt("trajectory.csv", Traj, delimiter=",")
+    output_dir = Path(__file__).resolve().parent / "data"
+    output_dir.mkdir(exist_ok=True)
+    np.savetxt(output_dir / "trajectory.csv", Traj, delimiter=",")
     return Traj
 if __name__ == "__main__":
     block_init = np.array([1, 0 ,0])

@@ -1,6 +1,7 @@
 import numpy as np
 import modern_robotics as mr
 import matplotlib.pyplot as plt
+from pathlib import Path
 
 import Nextstate as ns
 import FeedbackControl as fc
@@ -192,8 +193,10 @@ for i in range(len(Traj)-1):
     mu1_v_list.append(mu1_v)
 
 
-np.savetxt("overall_trajectory.csv", config_list, delimiter=",")
-print("Simulation done. File saved.")
+output_dir = Path(__file__).resolve().parent / "data"
+output_dir.mkdir(exist_ok=True)
+np.savetxt(output_dir / "overall_trajectory.csv", config_list, delimiter=",")
+print(f"Simulation done. File saved to {output_dir / 'overall_trajectory.csv'}.")
 
 
 Xerr_array = np.array(Xerr_list)
@@ -204,8 +207,8 @@ plt.subplot(2, 1, 1)
 plt.plot(Xerr_array[:, 0], label="wx")
 plt.plot(Xerr_array[:, 1], label="wy")
 plt.plot(Xerr_array[:, 2], label="wz")
-plt.ylabel("rad/s")
-plt.title("Angular error")
+plt.ylabel("rad")
+plt.title("Orientation tracking error")
 plt.legend()
 plt.grid(True)
 
@@ -214,12 +217,13 @@ plt.plot(Xerr_array[:, 3], label="vx")
 plt.plot(Xerr_array[:, 4], label="vy")
 plt.plot(Xerr_array[:, 5], label="vz")
 plt.xlabel("time step")
-plt.ylabel("m/s")
-plt.title("Linear error")
+plt.ylabel("m")
+plt.title("Position tracking error")
 plt.legend()
 plt.grid(True)
 
 plt.tight_layout()
+plt.savefig(output_dir / "tracking-error.png", dpi=150, bbox_inches="tight")
 plt.show()
 
 plt.figure(figsize=(10, 4))
@@ -227,8 +231,10 @@ plt.plot(mu1_w_list, label="angular")
 plt.plot(mu1_v_list, label="linear")
 plt.xlabel("time step")
 plt.ylabel("condition number")
-plt.title("Manipulability")
+plt.title("Jacobian conditioning (lower is better)")
 plt.ylim(0, 80)
 plt.grid(True)
 plt.legend()
+plt.tight_layout()
+plt.savefig(output_dir / "jacobian-condition.png", dpi=150, bbox_inches="tight")
 plt.show()

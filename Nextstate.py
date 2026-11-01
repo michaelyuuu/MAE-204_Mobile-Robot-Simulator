@@ -1,4 +1,5 @@
 import numpy as np
+from pathlib import Path
 # Nextstate.py
 # Computes the next state of the robot given the current state and control inputs.
 # Inputs:
@@ -81,8 +82,7 @@ if __name__ == "__main__":
         current_state = next_state[:12]
         state.append(next_state)
     # print(next_state)
-    np.savetxt("state.csv", state, delimiter=",")
+    output_dir = Path(__file__).resolve().parent / "data"
+    output_dir.mkdir(exist_ok=True)
+    np.savetxt(output_dir / "state.csv", state, delimiter=",")
     print(np.shape(state))
-
-# vedio link
-# https://drive.google.com/file/d/1lbgDFJGrlnpH5PzflTsHDh8_fr7KP37T/view?usp=sharing
